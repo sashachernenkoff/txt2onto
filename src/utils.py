@@ -22,10 +22,18 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from flair.data import Sentence
-from flair.embeddings import StackedEmbeddings, BertEmbeddings, ELMoEmbeddings
+from flair.embeddings import StackedEmbeddings, TransformerWordEmbeddings, FlairEmbeddings
 import nltk, torch, flair
+import ssl
 
 ## Dowload necessary NLTK models and lists of words
+# Disable SSL check
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 nltk.download('stopwords')
 nltk.download('wordnet')
 flair.device =  torch.device("cpu")
@@ -101,9 +109,11 @@ def makeStackedEmbedding():
     will take some storage space.
 
     Returns:
-        StackedEmbedding object consisting of BERT large-uncased and ELMo trained on PubMed corpus
+        StackedEmbedding object consisting of BERT large-uncased and Flair trained on PubMed corpus
     """
-    return StackedEmbeddings(embeddings = [BertEmbeddings("bert-large-uncased"), ELMoEmbeddings("pubmed")])
+    return StackedEmbeddings(embeddings = [TransformerWordEmbeddings("bert-large-uncased"),
+                                           FlairEmbeddings('pubmed-forward'),
+                                           FlairEmbeddings('pubmed-backward')])
 
 def removeUnencodedText(text):
     """
